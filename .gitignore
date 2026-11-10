@@ -1,0 +1,55 @@
+# Dependências e artefatos de build (não enviar ao Git)
+**/node_modules/
+**/dist/
+**/bin/
+**/obj/
+**/publish/
+**/TestResults/
+**/coverage/
+*.tsbuildinfo
+
+# Configurações locais, credenciais e chaves
+**/.env
+**/.env.*
+!**/.env.example
+**/.keys/
+**/secrets.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+**/*.pfx
+**/*.p12
+**/*.pem
+**/*.key
+*.sqlite
+*.sqlite3
+*.db
+
+# Arquivos locais de IDE, sistema e logs
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.log
+logs/
+.DS_Store
+Thumbs.db
+
+# Pacotes temporários e saídas de publicação
+publish/
+*.zip
+*.rar
+
+# Frontend já compilado para backend; gerado automaticamente durante build
+backend/wwwroot/
+# Outputs de testes modernos
+**/playwright-report/
+**/test-results/
+
+# Backups locais (nunca versionar dados de clientes ou credenciais)
+**/backups/
+*.backup
+*.dump
+*.bak
+*.pgpass
+*.sql.gz

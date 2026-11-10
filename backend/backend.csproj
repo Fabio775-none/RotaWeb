@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- Projeto ASP.NET Core Web API do RotaWeb. -->
+  <PropertyGroup>
+    <!-- O projeto usa .NET 10, a mesma linha utilizada durante o desenvolvimento local. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Nullable ajuda o compilador a detectar referências que podem ser nulas. -->
+    <Nullable>enable</Nullable>
+    <!-- ImplicitUsings reduz repetição de imports básicos. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Namespace fixo para manter os arquivos organizados. -->
+    <RootNamespace>RotaWeb.Api</RootNamespace>
+    <UserSecretsId>72dfb0a9-2bd8-4dab-b394-4f491be520cf</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Identity fornece hash de senha, lockout, tokens de identidade e estruturas de conta. -->
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
+    <!-- EF Core Design permite migrations caso o projeto evolua para esse fluxo. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- Provider oficial do ecossistema Npgsql para PostgreSQL. -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+  </ItemGroup>
+</Project>

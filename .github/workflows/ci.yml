@@ -1,0 +1,143 @@
+name: RotaWeb - validação contínua
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository:
+    name: Segurança do repositório
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/check-repository.mjs
+      - run: node --test tests/source-contracts/check-no-mfa.mjs
+
+  frontend:
+    name: Testes React e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high
+
+  backend:
+    name: Build e testes .NET 10
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          cache: false
+      - run: dotnet restore backend/backend.csproj
+      - run: dotnet build backend/backend.csproj --no-restore --configuration Release -warnaserror
+      - run: dotnet test tests/RotaWeb.Tests/RotaWeb.Tests.csproj --configuration Release --logger "trx;LogFileName=tests.trx"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rotaweb-test-results
+          path: tests/**/TestResults/**/*.trx
+          if-no-files-found: ignore
+
+  integration:
+    name: Integração HTTP com três bancos PostgreSQL descartáveis
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: integration-only
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://127.0.0.1:5263
+      ConnectionStrings__Business: 'Host=localhost;Port=5432;Database=rotaweb_data;Username=postgres;Password=integration-only'
+      ConnectionStrings__PassengerAuth: 'Host=localhost;Port=5432;Database=rotaweb_auth;Username=postgres;Password=integration-only'
+      ConnectionStrings__AdminAuth: 'Host=localhost;Port=5432;Database=rotaweb_admin_auth;Username=postgres;Password=integration-only'
+      Database__AutoCreateDevelopment: 'true'
+      Database__SeedDemoUsers: 'false'
+      Database__SeedDemoData: 'true'
+      BootstrapAdmin__Email: ci-admin@example.test
+      BootstrapAdmin__Name: 'Administrador de integração'
+      ROTA_WEB_REQUIRE_SMOKE: '1'
+      ROTA_WEB_SMOKE_URL: http://127.0.0.1:5263
+      ROTA_WEB_SMOKE_ADMIN_EMAIL: ci-admin@example.test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Criar três bancos isolados
+        env:
+          PGPASSWORD: integration-only
+        run: |
+          for db in rotaweb_data rotaweb_auth rotaweb_admin_auth; do
+            psql -v ON_ERROR_STOP=1 -h localhost -U postgres -d postgres -c "CREATE DATABASE $db;"
+          done
+      - name: Gerar credencial efêmera (não versionada)
+        run: |
+          echo "ROTA_WEB_SMOKE_ADMIN_PASSWORD=$(openssl rand -hex 32)Aa1!" >> "$GITHUB_ENV"
+      - name: Iniciar API para teste
+        run: |
+          BootstrapAdmin__Password="$ROTA_WEB_SMOKE_ADMIN_PASSWORD" dotnet run --project backend/backend.csproj --no-launch-profile > "$RUNNER_TEMP/rotaweb-server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/rotaweb.pid"
+          for i in $(seq 1 100); do
+            if curl --fail --silent http://127.0.0.1:5263/api/security/ready > /dev/null; then exit 0; fi
+            if ! kill -0 "$(cat "$RUNNER_TEMP/rotaweb.pid")" 2>/dev/null; then
+              cat "$RUNNER_TEMP/rotaweb-server.log"
+              exit 1
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/rotaweb-server.log"
+          exit 1
+      - name: Testar autenticação, CSRF, sessão, revogação e leitura
+        run: node --test tests/integration/http-smoke.test.mjs
+      - name: Diagnóstico em caso de falha
+        if: failure()
+        run: tail -n 120 "$RUNNER_TEMP/rotaweb-server.log" 2>/dev/null || true

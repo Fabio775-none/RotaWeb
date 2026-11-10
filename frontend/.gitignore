@@ -1,0 +1,15 @@
+# Dependências instaladas localmente.
+node_modules/
+
+# Build de produção.
+dist/
+
+# Arquivos locais de ambiente e segredos.
+.env
+.env.*
+!.env.example
+
+# Arquivos de editor e sistema operacional.
+.vscode/
+.DS_Store
+Thumbs.db

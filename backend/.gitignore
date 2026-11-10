@@ -1,0 +1,18 @@
+# Saídas de compilação do .NET.
+bin/
+obj/
+
+# Chaves locais do Data Protection nunca entram no Git.
+.keys/
+
+# Bancos, dumps e arquivos contendo segredos locais.
+*.dump
+*.backup
+*.pfx
+*.p12
+
+# Configurações locais do editor e do sistema operacional.
+.vs/
+.vscode/
+.DS_Store
+Thumbs.db

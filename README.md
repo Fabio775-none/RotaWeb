@@ -4,6 +4,22 @@
 
 > **Escopo:** projeto funcional de demonstração. O fluxo de pagamento Pix é simulado e não realiza transação bancária.
 
+## Público-alvo
+
+O **RotaWeb** é direcionado a usuários e organizações envolvidos no transporte rodoviário de passageiros, oferecendo uma plataforma digital demonstrativa para consulta, reserva e gerenciamento de passagens.
+
+O sistema contempla três perfis principais:
+
+- **Passageiros:** pessoas que buscam praticidade na consulta de viagens rodoviárias, comparação de preços e horários, escolha de poltronas e acompanhamento de suas reservas.
+
+- **Empresas e operadores de transporte rodoviário:** organizações que necessitam gerenciar ônibus, viagens, disponibilidade de assentos e passagens por meio de uma interface administrativa centralizada.
+
+- **Estudantes e desenvolvedores de software:** interessados em compreender a implementação de uma aplicação web completa, incluindo arquitetura frontend e backend, autenticação, APIs REST, persistência de dados e integração com PostgreSQL.
+
+**Finalidade do projeto:** demonstrar a aplicação de tecnologias modernas no desenvolvimento de uma plataforma de gestão e reserva de passagens rodoviárias, integrando funcionalidades voltadas ao passageiro e à administração.
+
+O RotaWeb possui caráter demonstrativo e educacional. Nesta versão, as reservas e os pagamentos simulados não representam a comercialização efetiva de passagens.
+
 ## Funcionalidades
 
 - Cadastro, login e perfil de passageiros.
